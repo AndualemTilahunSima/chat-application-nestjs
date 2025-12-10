@@ -4,12 +4,17 @@ import {
   MinLength,
   MaxLength,
   IsNotEmpty,
+  IsPhoneNumber
 } from 'class-validator';
 
 export class UserDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
+
+  @IsPhoneNumber()
+  @IsNotEmpty()
+  phoneNumber: string;
 
   @IsString()
   @IsNotEmpty()

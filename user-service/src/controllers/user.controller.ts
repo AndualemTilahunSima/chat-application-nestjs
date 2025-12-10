@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, ValidationPipe, UsePipes } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, ValidationPipe, UsePipes, Patch } from '@nestjs/common';
 import { UserDto } from 'src/dto/user.dto';
 import { UserService } from 'src/services/user.service';
 
@@ -40,5 +40,11 @@ export class UserController {
     async deleteUser(@Param('id') id: string) {
         await this.userService.deleteUser(id);
         return { message: 'User deleted successfully' };
+    }
+
+    @Patch(':otp/verify')
+    async verifyUser(@Param('otp') otp: string) {
+        const result = await this.userService.verifyOtp(otp);
+        return result ? { message: 'OTP verified successfully' } : { message: 'Invalid OTP' };
     }
 }

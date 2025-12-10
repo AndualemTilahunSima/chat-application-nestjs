@@ -1,6 +1,7 @@
 import { UserDto } from '../dto/user.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { UserEntity } from '../entities/user.entity';
+import { OtpResponseDto } from 'src/dto/otp-response.dto';
 
 export class UserMapper {
 
@@ -20,9 +21,15 @@ export class UserMapper {
     dto.email = userEntity.email;
     dto.firstName = userEntity.firstName;
     dto.lastName = userEntity.lastName;
-    dto.isActive = userEntity.isActive;
+    dto.status = userEntity.status;
     dto.createdAt = userEntity.createdAt;
     dto.updatedAt = userEntity.updatedAt;
+    return dto;
+  }
+
+  static toOtpResponseDto(otp: string): OtpResponseDto {
+    const dto = new OtpResponseDto();
+    dto.otp = otp;
     return dto;
   }
 }

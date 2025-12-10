@@ -8,3 +8,5 @@ export interface IUserRepository {
     update(id: string, user: UserEntity): Promise<UserEntity | null>;
     delete(id: string): Promise<void>;
 }
+
+export const IUserRepository = 'IUserRepository';

@@ -44,7 +44,7 @@ export class UserRepository implements IUserRepository {
     async update(id: string, user: UserEntity): Promise<UserEntity | null> {
         await this.repository.update(id, user as any);
         const updatedUser = await this.repository.findOne({ where: { id } });
-        return updatedUser ? updatedUser : null;
+        return updatedUser;
     }
 
     async delete(id: string): Promise<void> {

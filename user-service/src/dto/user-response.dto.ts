@@ -1,9 +1,11 @@
+import { UserStatus } from "src/entities/user.entity";
+
 export class UserResponseDto {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  isActive: boolean;
+  status: UserStatus;
   createdAt: Date;
   updatedAt: Date;
 }
