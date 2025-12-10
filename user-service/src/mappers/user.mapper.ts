@@ -2,6 +2,7 @@ import { UserDto } from '../dto/user.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { UserEntity } from '../entities/user.entity';
 import { OtpResponseDto } from 'src/dto/otp-response.dto';
+import { LoginResponseDto } from 'src/dto/login.response.dto';
 
 export class UserMapper {
 
@@ -30,6 +31,14 @@ export class UserMapper {
   static toOtpResponseDto(otp: string): OtpResponseDto {
     const dto = new OtpResponseDto();
     dto.otp = otp;
+    return dto;
+  }
+  static toLoginResponseDto(userEntity: UserEntity, token: string) {
+    const dto = new LoginResponseDto();
+    dto.profileImage = "";
+    dto.displayName = `${userEntity.firstName} ${userEntity.lastName}`;
+    dto.email = userEntity.email;
+    dto.token = token;
     return dto;
   }
 }
