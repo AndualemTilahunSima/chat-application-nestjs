@@ -42,7 +42,14 @@ export class UserRepository implements IUserRepository {
     }
 
     async update(id: string, user: UserEntity): Promise<UserEntity | null> {
-        await this.repository.update(id, user as any);
+        await this.repository.update(id, {
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            password: user.password,
+            phoneNumber: user.phoneNumber,
+            status: user.status,
+        });
         const updatedUser = await this.repository.findOne({ where: { id } });
         return updatedUser;
     }

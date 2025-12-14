@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, ValidationPipe, UsePipes, Patch, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, ValidationPipe, UsePipes, Patch, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UserDto } from 'src/dto/user.dto';
 import { UserService } from 'src/services/user.service';
 import { AuthGuard } from './auth.guard';
@@ -50,5 +51,18 @@ export class UserController {
     async verifyUser(@Param('otp') otp: string) {
         const result = await this.userService.verifyOtp(otp);
         return result ? { message: 'OTP verified successfully' } : { message: 'Invalid OTP' };
+    }
+
+    @UseGuards(AuthGuard)
+    @Post(':id/profile-image')
+    @UseInterceptors(FileInterceptor('file'))
+    async uploadProfileImage(
+        @Param('id') id: string,
+        @UploadedFile() file: Express.Multer.File,
+    ) {
+        if (!file) {
+            throw new Error('No file provided');
+        }
+        return await this.userService.updateProfileImage(id, file);
     }
 }

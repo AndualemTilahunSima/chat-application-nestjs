@@ -35,6 +35,9 @@ export class UserEntity {
   @Column({ type: 'varchar', length: 20, nullable: true, name: 'phone_number' })
   phoneNumber?: string;
 
+  @Column({ type: 'varchar', length: 36, nullable: true, name: 'profile_image' })
+  profileImage?: string;
+
   @Column({ type: 'enum', enum: UserStatus, default: UserStatus.PENDING })
   status: UserStatus;
 

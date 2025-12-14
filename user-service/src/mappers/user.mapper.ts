@@ -12,6 +12,7 @@ export class UserMapper {
     entity.firstName = user.firstName;
     entity.lastName = user.lastName;
     entity.password = user.password;
+    entity.phoneNumber = user.phoneNumber;
     return entity;
   }
 
@@ -23,6 +24,7 @@ export class UserMapper {
     dto.firstName = userEntity.firstName;
     dto.lastName = userEntity.lastName;
     dto.status = userEntity.status;
+    dto.profileImage = userEntity.profileImage;
     dto.createdAt = userEntity.createdAt;
     dto.updatedAt = userEntity.updatedAt;
     return dto;

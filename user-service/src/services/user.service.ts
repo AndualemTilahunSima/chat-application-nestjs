@@ -1,97 +1,111 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UserResponseDto } from 'src/dto/user-response.dto';
 import { UserDto } from 'src/dto/user.dto';
-import * as bcrypt from 'bcryptjs';
 import { UserMapper } from 'src/mappers/user.mapper';
 import { UserConflictException, UserNotFoundException } from 'src/exceptions/custom.exceptions';
 import { UserRepository } from 'src/repositories/user.repository';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { UserEntity, UserStatus } from '../entities/user.entity';
 import { RedisService } from '../common/redis.service';
 import { OtpResponseDto } from 'src/dto/otp-response.dto';
+import { StorageClientService } from './storage-client.service';
 
 @Injectable()
 export class UserService {
+  private readonly OTP_EXPIRATION_TIME = 300; // 5 minutes in seconds
+  private readonly OTP_KEY_PREFIX = 'otp:user:';
+
   constructor(
     @Inject('IUserRepository')
     private readonly userRepository: UserRepository,
-    @InjectRepository(UserEntity)
-    private readonly userRepo: Repository<UserEntity>,
     private readonly redisService: RedisService,
-  ) { }
+    private readonly storageClientService: StorageClientService,
+  ) {}
 
   async createUser(userDto: UserDto): Promise<OtpResponseDto> {
-
     const existingUser = await this.userRepository.findByEmail(userDto.email);
 
     if (existingUser) {
       throw new UserConflictException('User with this email already exists');
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(userDto.password, 10);
-
-    userDto.password = hashedPassword;
-
-    // Create user domain entity
+    // Create user domain entity (password will be hashed by entity hook)
     const userEntity = UserMapper.toEntity(userDto);
 
     // Save user
     const savedUser = await this.userRepository.create(userEntity);
 
-    const otp = await this.generateOtp(savedUser);
+    // Generate and store OTP
+    const otp = await this.generateOtp(savedUser.id);
 
     return UserMapper.toOtpResponseDto(otp);
   }
 
-  async generateOtp(saved: UserEntity) {
-
+  async generateOtp(userId: string): Promise<string> {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const key = `${this.OTP_KEY_PREFIX}${otp}`;
 
-    await this.redisService.set(`otp:user:${otp}`, saved.id, 300);
+    await this.redisService.set(key, userId, this.OTP_EXPIRATION_TIME);
 
     return otp;
   }
 
-  async verifyOtp(otp: string) {
-    const key = `otp:user:${otp}`;
-    console.log('Verifying OTP with key:', key);
+  async verifyOtp(otp: string): Promise<boolean> {
+    const key = `${this.OTP_KEY_PREFIX}${otp}`;
     const userId = await this.redisService.get(key);
-    if (userId) {
-      let user = await this.userRepository.findById(userId);
-      if (!user) {
-        throw new UserNotFoundException(`User with ID ${userId} not found`);
-      }
-      user.status = UserStatus.ACTIVE;
-      await this.userRepository.update(userId, user);
-      await this.redisService.del(key);
-      return true;
+
+    if (!userId) {
+      return false;
     }
-    return false;
+
+    const user = await this.userRepository.findById(userId);
+
+    if (!user) {
+      throw new UserNotFoundException(`User with ID ${userId} not found`);
+    }
+
+    // Update user status to active
+    user.status = UserStatus.ACTIVE;
+    await this.userRepository.update(userId, user);
+
+    // Delete OTP from Redis
+    await this.redisService.del(key);
+
+    return true;
   }
 
   async getUserById(id: string): Promise<UserResponseDto> {
     const user = await this.userRepository.findById(id);
+
     if (!user) {
       throw new UserNotFoundException(`User with ID ${id} not found`);
     }
+
     return UserMapper.toResponseDto(user);
   }
 
   async getUserByEmail(email: string): Promise<UserResponseDto> {
     const user = await this.userRepository.findByEmail(email);
+
     if (!user) {
-      throw new UserNotFoundException(`User with Email ${email} not found`);
+      throw new UserNotFoundException(`User with email ${email} not found`);
     }
+
     return UserMapper.toResponseDto(user);
   }
 
-  async getAllUsers(page: number = 1, limit: number = 10): Promise<{ users: UserResponseDto[]; total: number; page: number; totalPages: number }> {
+  async getAllUsers(
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{
+    users: UserResponseDto[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
     const { users, total } = await this.userRepository.findAll(page, limit);
 
     return {
-      users: users.map(user => UserMapper.toResponseDto(user)),
+      users: users.map((user) => UserMapper.toResponseDto(user)),
       total,
       page,
       totalPages: Math.ceil(total / limit),
@@ -99,15 +113,21 @@ export class UserService {
   }
 
   async updateUser(id: string, userDto: UserDto): Promise<UserResponseDto> {
+    const existingUser = await this.userRepository.findById(id);
 
-    const user = await this.userRepository.findById(id);
-
-    if (!user) {
+    if (!existingUser) {
       throw new UserNotFoundException(`User with ID ${id} not found`);
     }
 
-    const userEntity = UserMapper.toEntity(userDto);
+    // Check if email is being changed and if it's already taken
+    if (userDto.email !== existingUser.email) {
+      const emailExists = await this.userRepository.findByEmail(userDto.email);
+      if (emailExists) {
+        throw new UserConflictException('User with this email already exists');
+      }
+    }
 
+    const userEntity = UserMapper.toEntity(userDto);
     const updatedUser = await this.userRepository.update(id, userEntity);
 
     if (!updatedUser) {
@@ -119,9 +139,32 @@ export class UserService {
 
   async deleteUser(id: string): Promise<void> {
     const user = await this.userRepository.findById(id);
+
     if (!user) {
       throw new UserNotFoundException(`User with ID ${id} not found`);
     }
+
     await this.userRepository.delete(id);
+  }
+
+  async updateProfileImage(userId: string, file: Express.Multer.File): Promise<UserResponseDto> {
+    const user = await this.userRepository.findById(userId);
+
+    if (!user) {
+      throw new UserNotFoundException(`User with ID ${userId} not found`);
+    }
+
+    // Upload file to storage service
+    const uploadResult = await this.storageClientService.uploadFile(file);
+
+    // Update user with profile image ID
+    user.profileImage = uploadResult.id;
+    const updatedUser = await this.userRepository.update(userId, user);
+
+    if (!updatedUser) {
+      throw new UserNotFoundException(`User with ID ${userId} not found`);
+    }
+
+    return UserMapper.toResponseDto(updatedUser);
   }
 }

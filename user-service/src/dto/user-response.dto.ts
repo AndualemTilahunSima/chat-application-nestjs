@@ -6,6 +6,7 @@ export class UserResponseDto {
   firstName: string;
   lastName: string;
   status: UserStatus;
+  profileImage?: string;
   createdAt: Date;
   updatedAt: Date;
 }
