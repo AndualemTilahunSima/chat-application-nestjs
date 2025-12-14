@@ -6,6 +6,7 @@ import { UserEntity } from './entities/user.entity';
 import { RedisModule } from './common/redis.module';
 import { IUserRepository } from './repositories/user.repository.interface';
 import { UserRepository } from './repositories/user.repository';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { UserRepository } from './repositories/user.repository';
       provide: IUserRepository,
       useClass: UserRepository,
     },
+    JwtService
   ],
   controllers: [UserController],
   exports: [UserService, IUserRepository],

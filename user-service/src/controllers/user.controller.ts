@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, ValidationPipe, UsePipes, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, ValidationPipe, UsePipes, Patch, UseGuards } from '@nestjs/common';
 import { UserDto } from 'src/dto/user.dto';
 import { UserService } from 'src/services/user.service';
-
+import { AuthGuard } from './auth.guard';
 
 
 @Controller('users')
@@ -14,6 +14,7 @@ export class UserController {
         return await this.userService.createUser(userDto);
     }
 
+    @UseGuards(AuthGuard)
     @Get()
     async getAllUsers(
         @Query('page') page: number = 1,
@@ -22,11 +23,13 @@ export class UserController {
         return await this.userService.getAllUsers(Number(page), Number(limit));
     }
 
+    @UseGuards(AuthGuard)
     @Get(':id')
     async getUserById(@Param('id') id: string) {
         return await this.userService.getUserById(id);
     }
 
+    @UseGuards(AuthGuard)
     @Put(':id')
     @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
     async updateUser(
@@ -36,6 +39,7 @@ export class UserController {
         return await this.userService.updateUser(id, userDto);
     }
 
+    @UseGuards(AuthGuard)
     @Delete(':id')
     async deleteUser(@Param('id') id: string) {
         await this.userService.deleteUser(id);
