@@ -7,14 +7,19 @@ import { UserEntity } from './entities/user.entity';
 import { RedisModule } from './common/redis.module';
 import { IUserRepository } from './repositories/user.repository.interface';
 import { UserRepository } from './repositories/user.repository';
-import { JwtService } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
 import { StorageClientService } from './services/storage-client.service';
+import { AuthGuard } from './controllers/auth.guard';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserEntity]),
     RedisModule,
     HttpModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'change_this_secret',
+      signOptions: { expiresIn: '1h' },
+    }),
   ],
    providers: [
     UserService,
@@ -23,7 +28,7 @@ import { StorageClientService } from './services/storage-client.service';
       provide: IUserRepository,
       useClass: UserRepository,
     },
-    JwtService
+    AuthGuard,
   ],
   controllers: [UserController],
   exports: [UserService, IUserRepository],
