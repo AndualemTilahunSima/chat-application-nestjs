@@ -8,10 +8,11 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger, UseGuards } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { MessageService } from '../services/message.service';
 import { UserStatusService } from '../services/user-status.service';
+import { ThreadService } from '../services/thread.service';
 import { CreateMessageDto } from '../dto/create-message.dto';
 
 interface AuthenticatedSocket extends Socket {
@@ -35,6 +36,7 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
   constructor(
     private readonly messageService: MessageService,
     private readonly userStatusService: UserStatusService,
+    private readonly threadService: ThreadService,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -62,6 +64,10 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
 
       // Set user status to online
       await this.userStatusService.setUserOnline(userId);
+
+       // Auto-create threads with other online users so they immediately
+       // see each other in their conversation lists.
+       await this.autoCreateThreadsForUser(userId);
 
       // Notify other users about this user coming online
       this.server.emit('user-online', { userId });
@@ -146,5 +152,27 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
       this.server.to(socketId).emit(event, data);
     }
   }
-}
 
+  /**
+   * Ensure there is a thread between the newly connected user and all
+   * other users who are currently online.
+   * This enables the "auto-create thread when both users are online" behavior.
+   */
+  private async autoCreateThreadsForUser(userId: string): Promise<void> {
+    try {
+      const otherOnlineUserIds = await this.userStatusService.getOnlineUsersExcept(
+        userId,
+      );
+
+      await Promise.all(
+        otherOnlineUserIds.map((otherUserId) =>
+          this.threadService.findOrCreateThread(userId, otherUserId),
+        ),
+      );
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to auto-create threads for user ${userId}: ${error?.message || error}`,
+      );
+    }
+  }
+}

@@ -57,5 +57,19 @@ export class UserStatusService {
 
     return statusMap;
   }
+
+  /**
+   * Get all userIds that are currently ONLINE, excluding the given userId.
+   * This is used to auto-create threads between users who are online at the same time.
+   */
+  async getOnlineUsersExcept(userId: string): Promise<string[]> {
+    const statuses = await this.userStatusModel
+      .find({ status: OnlineStatus.ONLINE })
+      .exec();
+
+    return statuses
+      .map((s) => s.userId)
+      .filter((id) => id && id !== userId);
+  }
 }
 
