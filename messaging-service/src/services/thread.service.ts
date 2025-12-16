@@ -48,7 +48,7 @@ export class ThreadService {
           isRead: false,
         }).exec();
 
-        let lastMessage = null;
+        let lastMessage: { text: string; senderId: string; createdAt: Date } | undefined = undefined;
         if (thread.lastMessageId) {
           const message = await this.messageModel.findById(thread.lastMessageId).exec();
           if (message) {

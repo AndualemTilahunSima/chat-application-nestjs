@@ -7,9 +7,6 @@ import { CommonModule } from './common.module';
 
 @Module({
     imports: [
-        ConfigModule.forRoot({
-            isGlobal: false,
-        }),
         TypeOrmModule.forRootAsync({
             imports: [ConfigModule],
             useFactory: (configService: ConfigService) => ({

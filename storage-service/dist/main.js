@@ -9,7 +9,7 @@ async function bootstrap() {
         credentials: true,
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     });
-    await app.listen(process.env.PORT ?? 3003);
+    await app.listen(process.env.PORT ?? 3002);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

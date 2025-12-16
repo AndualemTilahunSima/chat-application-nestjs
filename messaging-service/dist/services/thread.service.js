@@ -52,7 +52,7 @@ let ThreadService = class ThreadService {
                 receiverId: userId,
                 isRead: false,
             }).exec();
-            let lastMessage = null;
+            let lastMessage = undefined;
             if (thread.lastMessageId) {
                 const message = await this.messageModel.findById(thread.lastMessageId).exec();
                 if (message) {
