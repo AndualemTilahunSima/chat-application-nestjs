@@ -6,6 +6,7 @@ import { UserStatus } from 'src/entities/user.entity';
 import { UserMapper } from 'src/mappers/user.mapper';
 import { RedisService } from 'src/common/redis.service';
 import { LogoutDto } from 'src/dto/logout.dto';
+import { StorageClientService } from 'src/services/storage-client.service';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +18,7 @@ export class AuthService {
     private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
+    private readonly storageClientService: StorageClientService,
   ) {}
 
   async authenticate(dto: LoginDto) {
@@ -41,7 +43,14 @@ export class AuthService {
 
     await this.saveTokenToRedis(user.id, token);
 
-    return UserMapper.toLoginResponseDto(user, token);
+    let profileImageUrl: string | undefined;
+    if (user.profileImage) {
+      profileImageUrl = await this.storageClientService.getPresignedUrl(
+        user.profileImage,
+      );
+    }
+
+    return UserMapper.toLoginResponseDto(user, token, profileImageUrl);
   }
 
   async saveTokenToRedis(userId: string, token: string): Promise<void> {

@@ -35,9 +35,9 @@ export class UserMapper {
     dto.otp = otp;
     return dto;
   }
-  static toLoginResponseDto(userEntity: UserEntity, token: string) {
+  static toLoginResponseDto(userEntity: UserEntity, token: string, profileImageUrl?: string) {
     const dto = new LoginResponseDto();
-    dto.profileImage = "";
+    dto.profileImage = profileImageUrl || "";
     dto.displayName = `${userEntity.firstName} ${userEntity.lastName}`;
     dto.email = userEntity.email;
     dto.token = token;

@@ -31,6 +31,6 @@ import { AuthGuard } from './controllers/auth.guard';
     AuthGuard,
   ],
   controllers: [UserController],
-  exports: [UserService, IUserRepository],
+  exports: [UserService, IUserRepository, StorageClientService],
 })
 export class UserModule {}

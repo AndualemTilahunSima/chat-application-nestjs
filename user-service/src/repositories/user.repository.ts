@@ -48,6 +48,7 @@ export class UserRepository implements IUserRepository {
             lastName: user.lastName,
             password: user.password,
             phoneNumber: user.phoneNumber,
+      profileImage: user.profileImage,
             status: user.status,
         });
         const updatedUser = await this.repository.findOne({ where: { id } });
