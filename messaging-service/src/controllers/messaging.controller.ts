@@ -8,6 +8,7 @@ import {
   Param,
   UsePipes,
   ValidationPipe,
+  Query,
 } from '@nestjs/common';
 import { MessageService } from '../services/message.service';
 import { ThreadService } from '../services/thread.service';
@@ -56,6 +57,31 @@ export class MessagingController {
     const userId = req.user.sub;
     const status = await this.userStatusService.getUserStatus(userId);
     return { userId, status: status || 'offline' };
+  }
+
+  /**
+   * Get online/offline status for multiple users in one request.
+   * Example: GET /messaging/status/users?userIds=uid1,uid2,uid3
+   */
+  @Get('status/users')
+  async getUsersStatus(@Query('userIds') userIds: string | string[] | undefined) {
+    if (!userIds) {
+      return {};
+    }
+
+    const idsArray = Array.isArray(userIds)
+      ? userIds
+      : userIds
+          .split(',')
+          .map((id) => id.trim())
+          .filter((id) => id.length > 0);
+
+    if (idsArray.length === 0) {
+      return {};
+    }
+
+    const statusMap = await this.userStatusService.getUsersStatus(idsArray);
+    return statusMap;
   }
 }
 
