@@ -2,7 +2,7 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
-import * as FormData from 'form-data';
+import FormData from 'form-data';
 
 @Injectable()
 export class StorageClientService {
