@@ -147,7 +147,7 @@ export class UserService {
     await this.userRepository.delete(id);
   }
 
-  async updateProfileImage(userId: string, file: Express.Multer.File): Promise<UserResponseDto> {
+  async updateProfileImage(userId: string, file: Express.Multer.File): Promise<any> {
     const user = await this.userRepository.findById(userId);
 
     if (!user) {
@@ -165,6 +165,14 @@ export class UserService {
       throw new UserNotFoundException(`User with ID ${userId} not found`);
     }
 
-    return UserMapper.toResponseDto(updatedUser);
+    // Get presigned URL for the uploaded image
+    const presignedUrl = await this.storageClientService.getPresignedUrl(uploadResult.id);
+
+    // Return user data with presigned URL
+    const userDto = UserMapper.toResponseDto(updatedUser);
+    return {
+      ...userDto,
+      profileImageUrl: presignedUrl,
+    };
   }
 }

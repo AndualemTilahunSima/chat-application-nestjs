@@ -41,5 +41,22 @@ export class StorageClientService {
       );
     }
   }
+
+  async getPresignedUrl(fileId: string, expiry: number = 3600): Promise<string> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get(`${this.storageServiceUrl}/storage/presigned-url/${fileId}`, {
+          params: { expiry },
+        }),
+      );
+
+      return response.data.url;
+    } catch (error) {
+      throw new HttpException(
+        `Failed to get presigned URL from storage service: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
 
