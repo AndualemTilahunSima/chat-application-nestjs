@@ -1,6 +1,6 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { Request } from 'express';
+import type { Request } from 'express';
 
 @Injectable()
 export class ProxyService {
@@ -12,7 +12,7 @@ export class ProxyService {
   constructor() {
     this.userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:3000';
     this.storageServiceUrl = process.env.STORAGE_SERVICE_URL || 'http://localhost:3002';
-    
+
     this.axiosInstance = axios.create({
       timeout: 30000,
     });
@@ -73,7 +73,10 @@ export class ProxyService {
     if (isFileUpload && body instanceof Request) {
       config.data = body;
       // Don't set Content-Type, let axios determine it from the stream
-      delete config.headers['content-type'];
+      if (config.headers) {
+        delete config.headers['content-type'];
+      }
+
     } else {
       config.data = body;
     }

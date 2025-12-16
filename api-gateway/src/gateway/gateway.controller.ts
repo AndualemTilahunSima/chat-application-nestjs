@@ -6,7 +6,7 @@ import {
   UseGuards,
   HttpStatus,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { AuthGuard } from './guards/auth.guard';
 import { ProxyService } from './services/proxy.service';
 

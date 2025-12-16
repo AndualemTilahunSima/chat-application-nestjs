@@ -12,8 +12,8 @@ import { FileStorageEntity } from '../entities/file-storage.entity';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         type: 'mysql',
-        host: configService.get('DB_HOST') || 'mysql',
-        port: Number(configService.get('DB_PORT')) || 3306,
+        host: configService.get('DB_HOST') || '127.0.0.1',
+        port: Number(configService.get('DB_PORT')) || 3307,
         username: configService.get('DB_USERNAME') || 'admin',
         password: configService.get('DB_PASSWORD') || 'admin',
         database: configService.get('DB_DATABASE') || 'storage_db',
