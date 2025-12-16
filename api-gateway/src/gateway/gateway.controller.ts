@@ -58,6 +58,12 @@ export class GatewayController {
     return this.proxyRequest(req, res);
   }
 
+  @All('messaging/*')
+  @UseGuards(AuthGuard)
+  async handleMessaging(@Req() req: Request, @Res() res: Response) {
+    return this.proxyRequest(req, res);
+  }
+
   @All('*')
   @UseGuards(AuthGuard)
   async handleAllOtherRoutes(@Req() req: Request, @Res() res: Response) {

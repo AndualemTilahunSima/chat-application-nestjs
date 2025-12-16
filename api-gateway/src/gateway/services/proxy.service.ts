@@ -7,11 +7,13 @@ export class ProxyService {
   private readonly logger = new Logger(ProxyService.name);
   private readonly userServiceUrl: string;
   private readonly storageServiceUrl: string;
+  private readonly messagingServiceUrl: string;
   private readonly axiosInstance: AxiosInstance;
 
   constructor() {
     this.userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:3000';
     this.storageServiceUrl = process.env.STORAGE_SERVICE_URL || 'http://localhost:3002';
+    this.messagingServiceUrl = process.env.MESSAGING_SERVICE_URL || 'http://localhost:3003';
 
     this.axiosInstance = axios.create({
       timeout: 30000,
@@ -51,7 +53,16 @@ export class ProxyService {
   ): Promise<any> {
     // Determine which service to route to
     const isStorageRoute = path.startsWith('/storage');
-    const baseURL = isStorageRoute ? this.storageServiceUrl : this.userServiceUrl;
+    const isMessagingRoute = path.startsWith('/messaging');
+    let baseURL: string;
+    
+    if (isStorageRoute) {
+      baseURL = this.storageServiceUrl;
+    } else if (isMessagingRoute) {
+      baseURL = this.messagingServiceUrl;
+    } else {
+      baseURL = this.userServiceUrl;
+    }
 
     const isFileUpload = body && typeof body === 'object' && 'pipe' in body;
 
@@ -89,7 +100,9 @@ export class ProxyService {
         throw error;
       }
       this.logger.error('Unexpected proxy error', error);
-      const serviceName = isStorageRoute ? 'storage service' : 'user service';
+      let serviceName = 'user service';
+      if (isStorageRoute) serviceName = 'storage service';
+      else if (isMessagingRoute) serviceName = 'messaging service';
       throw new HttpException(
         `Failed to proxy request to ${serviceName}`,
         HttpStatus.BAD_GATEWAY,

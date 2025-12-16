@@ -66,6 +66,19 @@ services:
     depends_on:
       - redis
 
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: messaging_db
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+
   user-service:
     build:
       context: ./user-service
@@ -128,12 +141,32 @@ services:
       - REDIS_URL=redis://redis:6379
       - USER_SERVICE_URL=http://user-service:3000
       - STORAGE_SERVICE_URL=http://storage-service:3002
+      - MESSAGING_SERVICE_URL=http://messaging-service:3003
       - JWT_SECRET=${JWT_SECRET:-change_this_secret}
       - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}
     depends_on:
       - user-service
       - storage-service
+      - messaging-service
       - redis
+    networks:
+      - app-network
+
+  messaging-service:
+    build:
+      context: ./messaging-service
+      dockerfile: Dockerfile
+    container_name: messaging-service
+    restart: always
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - MONGODB_URI=mongodb://mongodb:27017/messaging_db
+      - JWT_SECRET=${JWT_SECRET:-change_this_secret}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}
+    depends_on:
+      - mongodb
     networks:
       - app-network
 
@@ -146,3 +179,4 @@ volumes:
   mysql_storage_data:
   redis_data:
   minio_data:
+  mongodb_data:
